@@ -34,22 +34,18 @@ defaults
 
 frontend www-http
     bind *:80
-    # Adds header to track that it came in as http
     http-request add-header X-Forwarded-Proto http
     default_backend web-backend
 
 frontend www-https
-    # Bind to port 443 (SSL)
     bind *:443 ssl crt /etc/haproxy/site.pem
-    # Adds header to track that it came in as https
     http-request add-header X-Forwarded-Proto https
     default_backend web-backend
 
 backend web-backend
     balance roundrobin
-    # THIS LINE DOES THE TASK 2 MAGIC (Redirects HTTP to HTTPS)
-    redirect scheme https if !{ ssl_fc }
+    # FIXED LINE BELOW:
+    redirect scheme https code 301 if !{ ssl_fc }
     
-    # Your Corrected Web Server IPs
     server 6896-web-01 13.218.200.225:80 check
     server 6896-web-02 44.211.41.114:80 check
