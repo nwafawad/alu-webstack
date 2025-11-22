@@ -1,33 +1,22 @@
 #!/usr/bin/env bash
-# Displays DNS records for a domain and its subdomains
+# Script that displays information about subdomains
 
-domain="$1"
-subdomain="$2"
-
-get_record() {
-    local full="$1.$domain"
-    host "$full" | awk '/has address/ {print "A", $4}'
-}
-
-print_output() {
+# Function to query DNS and format output
+check_subdomain() {
     local sub="$1"
-    local result
-    result=$(get_record "$sub")
-    local record_type
-    local destination
-
-    record_type=$(echo "$result" | awk '{print $1}')
-    destination=$(echo "$result" | awk '{print $2}')
-
-    echo "The subdomain $sub is a $record_type record and points to $destination"
+    local dom="$2"
+    # shellcheck disable=SC2086
+    dig "${sub}.${dom}" +noall +answer | awk -v s="$sub" '{ print "The subdomain " s " is a " $4 " record and points to " $5 }'
 }
 
-if [ -z "$subdomain" ]; then
-    print_output "www"
-    print_output "lb-01"
-    print_output "web-01"
-    print_output "web-02"
+# Main logic to handle arguments
+if [ "$#" -eq 2 ]; then
+    # If 2 arguments are passed (domain + subdomain), check specific subdomain
+    check_subdomain "$2" "$1"
 else
-    print_output "$subdomain"
+    # If only domain is passed, check the required list in order
+    check_subdomain "www" "$1"
+    check_subdomain "lb-01" "$1"
+    check_subdomain "web-01" "$1"
+    check_subdomain "web-02" "$1"
 fi
-
